@@ -29,7 +29,11 @@ func main() {
 		fmt.Fprintf(os.Stderr, "failed to connect via ssh: %v\n", err)
 		os.Exit(1)
 	}
-	defer client.Close() // nolint:errcheck
+	defer func() {
+		if err := client.Close(); err != nil {
+			fmt.Fprintf(os.Stderr, "failed to close ssh client: %v\n", err)
+		}
+	}()
 
 	exec := remote.Executor{Client: client}
 	fs := remote.FileSystem{Exec: exec}
