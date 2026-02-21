@@ -10,24 +10,23 @@ import (
 )
 
 // PythonStrategy deploys Python services.
-type PythonStrategy struct{}
+type PythonStrategy struct {
+	Exec application.RemoteExecutor
+}
 
 // Name returns identifier.
 func (PythonStrategy) Name() string { return "python" }
 
-// Detect checks for requirements.txt or pyproject.
-func (PythonStrategy) Detect(fs application.RemoteFileSystem, project domain.Project) (bool, error) {
-	paths := []string{project.DeployDir + "/requirements.txt", project.DeployDir + "/pyproject.toml"}
-	for _, p := range paths {
-		ok, err := fs.Exists(p)
-		if err != nil {
-			return false, err
-		}
-		if ok {
-			return true, nil
-		}
+// Detect checks for requirements.txt or pyproject.toml using a single batched command.
+func (p PythonStrategy) Detect(fs application.RemoteFileSystem, project domain.Project) (bool, error) {
+	cmd := fmt.Sprintf("( [ -f %s ] || [ -f %s ] ) && echo found || echo missing",
+		shell.Escape(project.DeployDir+"/requirements.txt"),
+		shell.Escape(project.DeployDir+"/pyproject.toml"))
+	out, err := p.Exec.Run(cmd)
+	if err != nil {
+		return false, err
 	}
-	return false, nil
+	return strings.Contains(out, "found"), nil
 }
 
 // Deploy installs dependencies.

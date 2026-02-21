@@ -18,19 +18,16 @@ type DockerStrategy struct {
 // Name returns the strategy identifier.
 func (d DockerStrategy) Name() string { return "docker" }
 
-// Detect checks for docker compose files.
+// Detect checks for docker compose files using a single batched command.
 func (d DockerStrategy) Detect(fs application.RemoteFileSystem, project domain.Project) (bool, error) {
-	paths := []string{project.DeployDir + "/docker-compose.yml", project.DeployDir + "/compose.yml"}
-	for _, p := range paths {
-		ok, err := fs.Exists(p)
-		if err != nil {
-			return false, err
-		}
-		if ok {
-			return true, nil
-		}
+	cmd := fmt.Sprintf("( [ -f %s ] || [ -f %s ] ) && echo found || echo missing",
+		shell.Escape(project.DeployDir+"/docker-compose.yml"),
+		shell.Escape(project.DeployDir+"/compose.yml"))
+	out, err := d.Exec.Run(cmd)
+	if err != nil {
+		return false, err
 	}
-	return false, nil
+	return strings.Contains(out, "found"), nil
 }
 
 // Deploy runs docker compose build+up.

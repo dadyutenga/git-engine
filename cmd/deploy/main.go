@@ -42,8 +42,8 @@ func main() {
 	strategies := []application.DeploymentStrategy{
 		detectors.DockerStrategy{Exec: exec, FS: fs},
 		detectors.NodeStrategy{},
-		detectors.LaravelStrategy{},
-		detectors.PythonStrategy{},
+		detectors.LaravelStrategy{Exec: exec},
+		detectors.PythonStrategy{Exec: exec},
 		detectors.StaticStrategy{},
 	}
 
