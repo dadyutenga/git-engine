@@ -1,0 +1,7 @@
+ssh:
+  host: example.com
+  user: deploy
+  port: 22
+  privateKeyPath: ~/.ssh/id_rsa
+  password: ""
+  knownHostsPath: ~/.ssh/known_hosts
