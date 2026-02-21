@@ -4,10 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"strconv"
 
 	"github.com/dadyutenga/git-engine/internal/application"
-	"github.com/dadyutenga/git-engine/internal/domain"
 	"github.com/dadyutenga/git-engine/internal/infrastructure/logger"
 )
 
@@ -68,7 +66,7 @@ func (c CLI) handleDeploy(args []string) error {
 	}
 	project := fs.Arg(0)
 	result, err := c.DeployService.Deploy(project)
-	if err != nil && err != domain.ErrUnsupportedProject {
+	if err != nil {
 		return err
 	}
 	if !result.Success {
@@ -139,13 +137,4 @@ Usage:
   deploy logs [-f] [-n 100] <project>
 `
 	_, _ = fmt.Fprintln(os.Stderr, msg)
-}
-
-// ParseLines converts string to int with fallback.
-func ParseLines(value string, fallback int) int {
-	i, err := strconv.Atoi(value)
-	if err != nil || i <= 0 {
-		return fallback
-	}
-	return i
 }

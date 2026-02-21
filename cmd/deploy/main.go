@@ -46,7 +46,7 @@ func main() {
 	log := logger.New(os.Stdout)
 	app := cli.CLI{
 		InitService:     application.InitService{Exec: exec, FS: fs},
-		DeployService:   application.DeployService{Exec: exec, FS: fs, Lock: lockManager, Strategies: strategies},
+		DeployService:   application.DeployService{Exec: exec, FS: fs, Lock: lockManager, Strategies: strategies, Branch: "main"},
 		RollbackService: application.RollbackService{Exec: exec, FS: fs, Strategies: strategies},
 		StatusService:   application.StatusService{Exec: exec, FS: fs, Strategies: strategies},
 		LogsService:     application.LogsService{Exec: exec},

@@ -6,6 +6,7 @@ import (
 
 	"github.com/dadyutenga/git-engine/internal/application"
 	"github.com/dadyutenga/git-engine/internal/domain"
+	"github.com/dadyutenga/git-engine/internal/shared/shell"
 )
 
 // LaravelStrategy handles Laravel/PHP deployments.
@@ -28,7 +29,7 @@ func (LaravelStrategy) Detect(fs application.RemoteFileSystem, project domain.Pr
 
 // Deploy installs composer deps and optimizes.
 func (LaravelStrategy) Deploy(project domain.Project, exec application.RemoteExecutor) error {
-	cmd := fmt.Sprintf("cd %s && composer install --no-dev --optimize-autoloader && php artisan config:cache && php artisan migrate --force", project.DeployDir)
+	cmd := fmt.Sprintf("cd %s && composer install --no-dev --optimize-autoloader && php artisan config:cache && php artisan migrate --force", shell.Escape(project.DeployDir))
 	_, err := exec.Run(cmd)
 	return err
 }

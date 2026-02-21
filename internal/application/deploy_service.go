@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/dadyutenga/git-engine/internal/domain"
+	"github.com/dadyutenga/git-engine/internal/shared/shell"
 )
 
 // DeployService orchestrates push deployments.
@@ -13,6 +14,7 @@ type DeployService struct {
 	FS         RemoteFileSystem
 	Lock       LockManager
 	Strategies []DeploymentStrategy
+	Branch     string
 }
 
 // Deploy executes a deployment pipeline for the given project.
@@ -48,12 +50,16 @@ func (s DeployService) Deploy(projectName string) (domain.DeploymentResult, erro
 	}
 
 	backupName := fmt.Sprintf("%s/%s-%d.tgz", project.BackupDir, project.Name, now.Unix())
-	if _, err := s.Exec.Run(fmt.Sprintf("cd %s && tar -czf %s .", project.DeployDir, backupName)); err != nil {
+	if _, err := s.Exec.Run(fmt.Sprintf("tar -czf %s -C %s .", shell.Escape(backupName), shell.Escape(project.DeployDir))); err != nil {
 		result.Message = "failed to create backup"
 		return result, err
 	}
 
-	if _, err := s.Exec.Run(fmt.Sprintf("cd %s && git fetch origin main && git reset --hard origin/main", project.DeployDir)); err != nil {
+	branch := s.Branch
+	if branch == "" {
+		branch = "main"
+	}
+	if _, err := s.Exec.Run(fmt.Sprintf("cd %s && git fetch origin %s && git reset --hard origin/%s", shell.Escape(project.DeployDir), shell.Escape(branch), shell.Escape(branch))); err != nil {
 		result.Message = "failed to update sources"
 		return result, err
 	}

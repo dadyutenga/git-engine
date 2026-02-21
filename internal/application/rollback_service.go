@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/dadyutenga/git-engine/internal/domain"
+	"github.com/dadyutenga/git-engine/internal/shared/shell"
 )
 
 // RollbackService restores applications from backups.
@@ -37,7 +38,12 @@ func (s RollbackService) Rollback(projectName, backup string) (domain.RollbackRe
 		chosen = files[len(files)-1]
 	}
 
-	if _, err := s.Exec.Run(fmt.Sprintf("tar -xzf %s/%s -C %s", project.BackupDir, chosen, project.DeployDir)); err != nil {
+	if _, err := s.Exec.Run(fmt.Sprintf("rm -rf %s/*", shell.Escape(project.DeployDir))); err != nil {
+		result.Message = "failed to clear deployment directory"
+		return result, err
+	}
+
+	if _, err := s.Exec.Run(fmt.Sprintf("tar -xzf %s -C %s", shell.Escape(fmt.Sprintf("%s/%s", project.BackupDir, chosen)), shell.Escape(project.DeployDir))); err != nil {
 		result.Message = "failed to restore backup"
 		return result, err
 	}

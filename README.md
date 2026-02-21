@@ -27,7 +27,10 @@ ssh:
   port: 22
   privateKeyPath: ~/.ssh/id_rsa
   password: ""
+  knownHostsPath: ~/.ssh/known_hosts
 ```
+
+`knownHostsPath` must point to a valid `known_hosts` file; the CLI refuses to connect without host key verification.
 
 ## Usage
 ```bash

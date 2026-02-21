@@ -4,18 +4,21 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"time"
 
 	gossh "golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/knownhosts"
 )
 
 // Config holds SSH connection configuration.
 type Config struct {
-	Host           string
-	User           string
-	Port           int
-	Password       string
-	PrivateKeyPath string
+	Host           string `yaml:"host"`
+	User           string `yaml:"user"`
+	Port           int    `yaml:"port"`
+	Password       string `yaml:"password"`
+	PrivateKeyPath string `yaml:"privateKeyPath"`
+	KnownHostsPath string `yaml:"knownHostsPath"`
 }
 
 // Client wraps an SSH client connection.
@@ -45,11 +48,16 @@ func New(cfg Config) (*Client, error) {
 		return nil, fmt.Errorf("no SSH authentication method provided")
 	}
 
+	hostKeyCallback, err := resolveHostKeyCallback(cfg.KnownHostsPath)
+	if err != nil {
+		return nil, err
+	}
+
 	addr := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
 	clientConfig := &gossh.ClientConfig{
 		User:            cfg.User,
 		Auth:            auths,
-		HostKeyCallback: gossh.InsecureIgnoreHostKey(), // nolint:gosec
+		HostKeyCallback: hostKeyCallback,
 		Timeout:         15 * time.Second,
 	}
 
@@ -91,4 +99,26 @@ func (c *Client) Close() error {
 		return nil
 	}
 	return c.client.Close()
+}
+
+func resolveHostKeyCallback(path string) (gossh.HostKeyCallback, error) {
+	if path == "" {
+		home, _ := os.UserHomeDir()
+		if home != "" {
+			defaultPath := filepath.Join(home, ".ssh", "known_hosts")
+			if _, err := os.Stat(defaultPath); err == nil {
+				path = defaultPath
+			}
+		}
+	}
+
+	if path == "" {
+		return nil, fmt.Errorf("known_hosts file is required; set ssh.knownHostsPath")
+	}
+
+	callback, err := knownhosts.New(path)
+	if err != nil {
+		return nil, fmt.Errorf("load known_hosts: %w", err)
+	}
+	return callback, nil
 }

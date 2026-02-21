@@ -6,6 +6,7 @@ import (
 
 	"github.com/dadyutenga/git-engine/internal/application"
 	"github.com/dadyutenga/git-engine/internal/domain"
+	"github.com/dadyutenga/git-engine/internal/shared/shell"
 )
 
 // PythonStrategy deploys Python services.
@@ -31,20 +32,20 @@ func (PythonStrategy) Detect(fs application.RemoteFileSystem, project domain.Pro
 
 // Deploy installs dependencies.
 func (PythonStrategy) Deploy(project domain.Project, exec application.RemoteExecutor) error {
-	cmd := fmt.Sprintf("cd %s && if [ -f requirements.txt ]; then pip install -r requirements.txt; fi", project.DeployDir)
+	cmd := fmt.Sprintf("cd %s && if [ -f requirements.txt ]; then pip install -r requirements.txt; fi", shell.Escape(project.DeployDir))
 	_, err := exec.Run(cmd)
 	return err
 }
 
 // Restart attempts to restart a systemd service matching project name.
 func (PythonStrategy) Restart(project domain.Project, exec application.RemoteExecutor) error {
-	_, err := exec.Run(fmt.Sprintf("systemctl restart %s || true", project.Name))
+	_, err := exec.Run(fmt.Sprintf("systemctl restart %s || true", shell.Escape(project.Name)))
 	return err
 }
 
 // Status checks systemd service state.
 func (PythonStrategy) Status(project domain.Project, exec application.RemoteExecutor) (bool, error) {
-	out, err := exec.Run(fmt.Sprintf("systemctl is-active %s || true", project.Name))
+	out, err := exec.Run(fmt.Sprintf("systemctl is-active %s || true", shell.Escape(project.Name)))
 	if err != nil {
 		return false, err
 	}

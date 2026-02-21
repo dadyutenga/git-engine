@@ -6,6 +6,7 @@ import (
 
 	"github.com/dadyutenga/git-engine/internal/application"
 	"github.com/dadyutenga/git-engine/internal/domain"
+	"github.com/dadyutenga/git-engine/internal/shared/shell"
 )
 
 // DockerStrategy deploys docker-compose based projects.
@@ -34,19 +35,19 @@ func (d DockerStrategy) Detect(fs application.RemoteFileSystem, project domain.P
 
 // Deploy runs docker compose build+up.
 func (d DockerStrategy) Deploy(project domain.Project, exec application.RemoteExecutor) error {
-	_, err := exec.Run(fmt.Sprintf("cd %s && docker compose down && docker compose up -d --build", project.DeployDir))
+	_, err := exec.Run(fmt.Sprintf("cd %s && docker compose down && docker compose up -d --build", shell.Escape(project.DeployDir)))
 	return err
 }
 
 // Restart restarts docker compose services.
 func (d DockerStrategy) Restart(project domain.Project, exec application.RemoteExecutor) error {
-	_, err := exec.Run(fmt.Sprintf("cd %s && docker compose restart", project.DeployDir))
+	_, err := exec.Run(fmt.Sprintf("cd %s && docker compose restart", shell.Escape(project.DeployDir)))
 	return err
 }
 
 // Status reports running state via docker compose.
 func (d DockerStrategy) Status(project domain.Project, exec application.RemoteExecutor) (bool, error) {
-	out, err := exec.Run(fmt.Sprintf("cd %s && docker compose ps --status running", project.DeployDir))
+	out, err := exec.Run(fmt.Sprintf("cd %s && docker compose ps --status running", shell.Escape(project.DeployDir)))
 	if err != nil {
 		return false, err
 	}

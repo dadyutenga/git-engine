@@ -4,3 +4,4 @@ ssh:
   port: 22
   privateKeyPath: ~/.ssh/id_rsa
   password: ""
+  knownHostsPath: ~/.ssh/known_hosts
