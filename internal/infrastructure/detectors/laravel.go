@@ -10,21 +10,23 @@ import (
 )
 
 // LaravelStrategy handles Laravel/PHP deployments.
-type LaravelStrategy struct{}
+type LaravelStrategy struct {
+	Exec application.RemoteExecutor
+}
 
 // Name returns strategy identifier.
 func (LaravelStrategy) Name() string { return "laravel" }
 
-// Detect checks for artisan and composer.json.
-func (LaravelStrategy) Detect(fs application.RemoteFileSystem, project domain.Project) (bool, error) {
-	artisan, err := fs.Exists(project.DeployDir + "/artisan")
+// Detect checks for artisan and composer.json using a single batched command.
+func (l LaravelStrategy) Detect(fs application.RemoteFileSystem, project domain.Project) (bool, error) {
+	cmd := fmt.Sprintf("( [ -f %s ] && [ -f %s ] ) && echo found || echo missing",
+		shell.Escape(project.DeployDir+"/artisan"),
+		shell.Escape(project.DeployDir+"/composer.json"))
+	out, err := l.Exec.Run(cmd)
 	if err != nil {
 		return false, err
 	}
-	if !artisan {
-		return false, nil
-	}
-	return fs.Exists(project.DeployDir + "/composer.json")
+	return strings.Contains(out, "found"), nil
 }
 
 // Deploy installs composer deps and optimizes.

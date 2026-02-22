@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/dadyutenga/git-engine/internal/domain"
+	"github.com/dadyutenga/git-engine/internal/shared/shell"
 )
 
 // InitService provisions remote directories and bare repositories for a new project.
@@ -42,7 +43,7 @@ func (s InitService) Init(projectName string) (domain.InitResult, error) {
 		}
 	}
 
-	if _, err := s.Exec.Run(fmt.Sprintf("test -d %s || git init --bare %s", project.RepoPath, project.RepoPath)); err != nil {
+	if _, err := s.Exec.Run(fmt.Sprintf("test -d %s || git init --bare %s", shell.Escape(project.RepoPath), shell.Escape(project.RepoPath))); err != nil {
 		return domain.InitResult{Project: project, Success: false, Message: "failed to initialize bare repository", Timestamp: now}, err
 	}
 

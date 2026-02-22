@@ -38,7 +38,7 @@ func (s RollbackService) Rollback(projectName, backup string) (domain.RollbackRe
 		chosen = files[len(files)-1]
 	}
 
-	if _, err := s.Exec.Run(fmt.Sprintf("rm -rf %s/*", shell.Escape(project.DeployDir))); err != nil {
+	if _, err := s.Exec.Run(fmt.Sprintf("find %s -mindepth 1 -delete", shell.Escape(project.DeployDir))); err != nil {
 		result.Message = "failed to clear deployment directory"
 		return result, err
 	}

@@ -2,6 +2,7 @@ package application
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/dadyutenga/git-engine/internal/domain"
@@ -42,7 +43,11 @@ func (s DeployService) Deploy(projectName string) (domain.DeploymentResult, erro
 		result.Message = "deployment lock unavailable"
 		return result, domain.ErrLockUnavailable
 	}
-	defer s.Lock.Release(project) // nolint:errcheck
+	defer func() {
+		if err := s.Lock.Release(project); err != nil {
+			log.Printf("WARNING: failed to release lock for %s: %v", project.Name, err)
+		}
+	}()
 
 	if err := s.FS.Mkdir(project.BackupDir, true); err != nil {
 		result.Message = "failed to ensure backup directory"
